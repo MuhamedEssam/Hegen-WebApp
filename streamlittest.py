@@ -32,6 +32,8 @@ with st.sidebar:
     st.write("3. Camels Pose Estimation ✅")
     st.write("4. Camels ID Recognition ✅")
     st.write("5. Camels Stride Angle Caclulation ✅")
+    v=st.slider( 'Speed',0.5, 2.0, 0.5)
+    st.write(f'Delay between frames:%f seconds' %v)
 
 
 hide_st_style = """
@@ -99,7 +101,7 @@ while cap.isOpened():
                         cells=dict(values=[df['Frame'], df['Camel 5'], df['Camel 24']],align='center'))])
         st.write(fig2)
 
-        time.sleep(1)
+        time.sleep(v)
     i+=1
 
 cap.release()
