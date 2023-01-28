@@ -65,6 +65,7 @@ while cap.isOpened():
     stframe.image(frame)
     if first ==0:
         first=1
+        time.sleep(1)
         continue
     with placeholder.container():
         camel1, camel2 = st.columns(2)
@@ -98,7 +99,7 @@ while cap.isOpened():
                         cells=dict(values=[df['Frame'], df['Camel 5'], df['Camel 24']],align='center'))])
         st.write(fig2)
 
-        time.sleep(0.25)
+        time.sleep(1)
     i+=1
 
 cap.release()
