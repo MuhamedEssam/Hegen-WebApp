@@ -1,49 +1,108 @@
-import cv2
 import streamlit as st
-import numpy as np
-from PIL import Image
+import cv2 as cv
+import time  # to simulate a real time data, time loop
+import pandas as pd
+import plotly.express as px  # interactive charts
+import plotly.graph_objects as go
+
+# f = st.file_uploader("Upload Camels Video")
+
+st.title("Real Time Camels Stride Dashboard")
+st.markdown('Powered by **IT Gates Corp.**')
+
+@st.experimental_memo
+def get_data() -> pd.DataFrame:
+    return pd.read_excel('data.xlsx')
+
+df = get_data()
+df=df.drop(['Unnamed: 0'],1)
+
+cap = cv.VideoCapture('result.mp4')
+
+stframe = st.empty()
+placeholder = st.empty()
+i=0
+prev_1=0
+prev_2=0
+first=0
+with st.sidebar:
+    st.write("This Demo includes:-")
+    st.write("1. Camels Detection ✅")
+    st.write("2. Camels Tracking ✅")
+    st.write("3. Camels Pose Estimation ✅")
+    st.write("4. Camels ID Recognition ✅")
+    st.write("5. Camels Stride Angle Caclulation ✅")
 
 
-def brighten_image(image, amount):
-    img_bright = cv2.convertScaleAbs(image, beta=amount)
-    return img_bright
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
+while cap.isOpened():
+    try:
+        tempdf=df.iloc[:i+1,:]
+    except:
+        print('no data')
+    ret, frame = cap.read()
+    camel1_angle=int(df['Camel 5'][i])
+    camel2_angle=int(df['Camel 24'][i])
+
+    if not ret:
+        print("Can't receive frame (stream end?). Exiting ...")
+        st.success("Done!")
+        break
+    if df.iloc[i,1]==5 :
+        camel1_angle= int(df.iloc[i,2])
+        camel2_angle=0
+    elif df.iloc[i,1]==24 :
+        camel1_angle=0
+        camel2_angle= int(df.iloc[i,2])
+    stframe.image(frame)
+    if first ==0:
+        first=1
+        continue
+    with placeholder.container():
+        camel1, camel2 = st.columns(2)
+        camel1.metric(
+            label="Camel 🐪: 5",
+            value=camel1_angle,
+            delta=camel1_angle-prev_1,
+        )
+
+        camel2.metric(
+            label="Camel 🐪: 24",
+            value=camel2_angle,
+            delta= camel2_angle-prev_2,
+        )
+        prev_1=camel1_angle
+        prev_2=camel2_angle
+        
+        st.markdown("### Stride Chart")
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(x=tempdf['Frame'], y=tempdf['Camel 5'],
+                            mode='lines+markers',
+                            name='Camel 🐪: 5'))
+        fig.add_trace(go.Scatter(x=tempdf['Frame'], y=tempdf['Camel 24'],
+                            mode='lines+markers',
+                            name='Camel 🐪:24 '))
+        st.write(fig)
+
+        st.markdown("### Detailed Data View")
+        fig2 = go.Figure(data=[go.Table( header=dict(values=list(df.columns), align='center'),
+                        cells=dict(values=[df['Frame'], df['Camel 5'], df['Camel 24']],align='center'))])
+        st.write(fig2)
+
+        time.sleep(0.25)
+    i+=1
+
+cap.release()
+cv.destroyAllWindows()
+        
 
 
-def blur_image(image, amount):
-    blur_img = cv2.GaussianBlur(image, (11, 11), amount)
-    return blur_img
-
-
-def enhance_details(img):
-    hdr = cv2.detailEnhance(img, sigma_s=12, sigma_r=0.15)
-    return hdr
-
-
-def main_loop():
-    st.title("OpenCV Demo App")
-    st.subheader("This app allows you to play with Image filters!")
-    st.text("We use OpenCV and Streamlit for this demo")
-
-    blur_rate = st.sidebar.slider("Blurring", min_value=0.5, max_value=3.5)
-    brightness_amount = st.sidebar.slider("Brightness", min_value=-50, max_value=50, value=0)
-    apply_enhancement_filter = st.sidebar.checkbox('Enhance Details')
-
-    image_file = st.file_uploader("Upload Your Image", type=['jpg', 'png', 'jpeg'])
-    if not image_file:
-        return None
-
-    original_image = Image.open(image_file)
-    original_image = np.array(original_image)
-
-    processed_image = blur_image(original_image, blur_rate)
-    processed_image = brighten_image(processed_image, brightness_amount)
-
-    if apply_enhancement_filter:
-        processed_image = enhance_details(processed_image)
-
-    st.text("Original Image vs Processed Image")
-    st.image([original_image, processed_image])
-
-
-if __name__ == '__main__':
-    main_loop()
