@@ -15,8 +15,10 @@ def get_data() -> pd.DataFrame:
     return pd.read_excel('data.xlsx')
 
 df = get_data()
-df=df.drop(['Unnamed: 0'],1)
-
+try:
+    df=df.drop(['Unnamed: 0'],1)
+except:
+    pass
 cap = cv.VideoCapture('result.mp4')
 
 stframe = st.empty()
